@@ -14,6 +14,8 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
         <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" crossorigin="anonymous"></script>
         <title>Assignment2_SeongHyunHan</title>
     </head>
     <body>
@@ -32,14 +34,20 @@
                 </div>
                   <label for="age">Age:</label>
                   <input type="range" id="age" name="age"
-                        value=60 min=0 max=100>
-                <div calss="ui-field-contain">
-
+                        value=20 min=0 max=100>
+                <div class="ui-field-contain">
+                  <label for="photo">Photo:</label>
+                  <img id="photo" class="img-responsive" alt=""
+                        src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+                  <button id="btnPhoto" class="ui-btn ui-icon-camera ui-btn-icon-left">Click to Upload</button>
                 </div>
 
-                <div id="pop" data-role="popup" data-position-to="window" data-transition="true"></div>
+                <div class="ui-field-contain">
+                  <button id="btnSave" class="ui-btn ui-icon-star ui-btn-icon-left">Save Info</button>
+                  <button id="btnGet" class="ui-btn ui-icon-action ui-btn-icon-left">Get Info</button>
+                  <button id="btnClear" class="ui-btn ui-icon-recycle ui-btn-icon-left">Clear Form</button>
+                </div>
 
-                <button id="getBtn" class="ui-btn ui-icon-action ui-btn-icon-left">Get Info</button>
             </div>
 
 
@@ -47,72 +55,38 @@
 
         <script type="text/javascript" src="cordova.js"></script>
         <script>
-          var jqmReady=$.Deferred();
-          var pgReady=$.Deferred();
-          var db=null;
+    			var jqmReady=$.Deferred();
+    			var pgReady=$.Deferred();
 
-            $(document).on("pagecreate",  jqmReady.resolve);
-            document.addEventListener("deviceready",pgReady.resolve,false);
-           // window.addEventListener("load",pgReady.resolve,false);
+    			$(document).on("pagecreate",  jqmReady.resolve);
+    			  document.addEventListener("deviceready",pgReady.resolve,false);
 
-           $.when(jqmReady,pgReady).then (function(){
+    			// We must wait until both objects are resolved!
+    			$.when(jqmReady,pgReady).then (function(){
+            navigator.notification.alert("Device Ready", null, "Ready", "OK");
+    			    document.getElementById("btnPhoto").addEventListener("click", takePhoto);
+    			});
 
-                // Create connection to SQLite database
-                db = window.sqlitePlugin.openDatabase({name: 'student.db', location: 'default'});
-                var $email=$('#email');
-                var $name=$('#name');
-                var $pop=$("#pop");
+        function takePhoto(){
+          var options =  { quality:25,
+                            destinationType: Camera.DestinationType.FILEURI,
+                            cameraDirection: Camera.Direction.FRONT,
+                            encodingType: Camera.EncodingType.JPEG,
+                            correctOrientation: true,
+                            allowEdit: true
+                          };
+          navigator.notification.alert("Code Got Here", null, "Here", "OK");
+          navigator.camera.getPicture(cameraSuccess, cameraError, options);
+        }
 
-                // We are going to execute a few transactions. This is for demo only!
-		// Use tutorial: https://github.com/litehelpers/Cordova-sqlite-storage#readme
-                db.transaction(function(tx) {
-                    // Remove the line below for Assignment N2!
-                    tx.executeSql('DROP TABLE IF EXISTS Student');
+        function cameraSuccess(imageData){
+          var photo = document.getElementById("photo");
+          photo.src = imageData;
+        }
 
-                    // Create table "Student" where we'll keep all students
-                    tx.executeSql('CREATE TABLE IF NOT EXISTS Student (email TEXT PRIMARY KEY, name TEXT)');
-
-                    // Add two "fake" students so you can test the assignment.
-		    // This is for demo only!
-                    tx.executeSql('INSERT INTO Student VALUES (?,?)', ['alex@alex.com', 'Alex Alex']);
-                    tx.executeSql('INSERT INTO Student VALUES (?,?)', ['john@john.com', 'John John']);
-
-                }, function(error) {
-                    console.log('Transaction ERROR: ' + error.message);
-
-                }, function() {
-                        console.log('Populated database OK');
-                });
-
-
-                $('#getBtn').click(function(event){
-                    // We need this line to prevent default "submit" action on the buttons
-                    event.preventDefault();
-
-                    // Check that email not empty!
-                    var email=$email.val();
-                    if (email.length < 3) {
-                        shosPopup("Email is too short");
-			return;
-                    }
-
-		    // Here we assume that email does exist. It's not always the case!
-                    db.executeSql('SELECT name FROM Student WHERE email LIKE "' + email + '"', [], function(rs) {
-                      $name.val(  rs.rows.item(0).name );
-
-                    }, function(error) {
-                      console.log('SELECT SQL statement ERROR: ' + error.message);
-                    });
-
-                });
-
-                function showPopup(msg){
-                    $("#pop").html("<p>"+msg+"</p>").popup("open");
-                    setTimeout(function() $pop.popup("close"), 1000);
-                }
-
-
-           });
+        function cameraError(errorData){
+          navigator.notification.alert("Error:" + JSON.stringify(errorData), null, "Camera Error", "OK");
+        }
         </script>
     </body>
 </html>
