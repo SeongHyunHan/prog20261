@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+        <!-- Note! Below we load jQuery and jQuery Mobile for Google CDN Library.
+             In General (and for your Assignment N2!) you must use locad jQuery and jQuery Mobile libraries locally!!!. -->
+        <!--<script src="libs/jquery/jquery.min.js" type="text/javascript"></script>
+        <link href="libs/jquery-mobile/jquery.mobile.min.css" rel="stylesheet" type="text/css"/>
+        <script src="libs/jquery-mobile/jquery.mobile.min.js" type="text/javascript"></script>-->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <title>Assignment2_SeongHyunHan</title>
+    </head>
+    <body>
+          <div data-role="page" id="storage">
+            <div data-role="content">
+                <div class="ui-field-contain">
+                  <label for="name">Full Name:</label>
+                  <input type="text" id="name" name="name" autofocus
+                       placeholder="Enter your full name">
+                </div>
+
+                <div class="ui-field-contain">
+                  <label for="email">Email:</label>
+                  <input type="text" id="email" name="email"
+                       placeholder="Enter your e-mail">
+                </div>
+                  <label for="age">Age:</label>
+                  <input type="range" id="age" name="age"
+                       min="0" max="100">
+                <div class="ui-field-contain">
+                  <label for="photo">Photo:</label>
+                  <img id="photo" class="img-responsive" alt=""
+                        src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+                  <button id="btnPhoto" class="ui-btn ui-icon-camera ui-btn-icon-left">Click to Upload</button>
+                </div>
+
+                <div class="ui-field-contain">
+                  <button id="btnSave" class="ui-btn ui-icon-star ui-btn-icon-left">Save Info</button>
+                  <button id="btnGet" class="ui-btn ui-icon-action ui-btn-icon-left">Get Info</button>
+                  <button id="btnClear" class="ui-btn ui-icon-recycle ui-btn-icon-left">Clear Form</button>
+                </div>
+
+            </div>
+
+
+        </div>
+
+        <script type="text/javascript" src="cordova.js"></script>
+        <script>
+    			var jqmReady=$.Deferred();
+    			var pgReady=$.Deferred();
+          var db = null;
+          var $name = $('#name');
+          var $email = $('#email');
+          var $age = $('#age');
+
+    			$(document).on("pagecreate",  jqmReady.resolve);
+    			  document.addEventListener("deviceready",pgReady.resolve,false);
+
+    			// We must wait until both objects are resolved!
+    			$.when(jqmReady,pgReady).then (function(){
+
+  			    document.getElementById("btnPhoto").addEventListener("click", takePhoto);
+            document.getElementById("btnSave").addEventListener("click", saveInfo);
+            document.getElementById("btnGet").addEventListener("click", getInfo);
+
+            //Create connection to SQLite database
+            db = window.sqlitePlugin.openDatabase({name: 'person.db', location: 'default'});
+
+            //Create table "Person" where keep all Person
+            db.transaction(function(tx){
+              tx.executeSql('CREATE TABLE IF NOT EXISTS Person (email TEXT PRIMARY KEY, name TEXT, age INT)');
+            },
+            function(error){
+              navigator.notification.alert("Error: " + error.message, null, "Database Error", "OK");
+            },
+            function(){
+              navigator.notification.alert("Database Opened", null, "Database Success", "OK");
+            });
+    			});
+
+          function saveInfo(event){
+            event.preventDefault();
+
+            var email=$email.val();
+            var name=$name.val();
+            var age = $age.slider("option", "value");
+
+            alert(age + ", " + $age.val());
+
+            db.transaction(function(tx){
+              tx.executeSql('INSERT INTO Person VALUES (?,?,?)', [email, name, age]);
+              }, function(error){
+              navigator.notification.alert("Error" + error.message, null, "Database Error", "OK");
+              }, function(){
+              navigator.notification.alert("Populated Database", null, "Database Success", "OK");
+            });
+          }
+
+          function getInfo(event){
+            event.preventDefault();
+
+            var email=$email.val();
+
+            db.executeSql('SELECT name, age FROM Person WHERE email LIKE "' + email + '"', [], function(rs){
+              $name.val(rs.rows.item(0).name);
+              $age.val(rs.rows.item(0).age).slider("refresh");
+            }, function(error){
+              navigator.notification.alert("Select SQL statment Error: " + error.message, null, "Database Error", "OK");
+            });
+          }
+
+
+
+        function takePhoto(){
+          var options =  { quality:25,
+                            destinationType: Camera.DestinationType.FILEURI,
+                            cameraDirection: Camera.Direction.FRONT,
+                            encodingType: Camera.EncodingType.JPEG,
+                            correctOrientation: true,
+                            allowEdit: true
+                          };
+          navigator.camera.getPicture(cameraSuccess, cameraError, options);
+        }
+
+        function cameraSuccess(imageData){
+          var photo = document.getElementById("photo");
+          photo.src = imageData;
+        }
+
+        function cameraError(errorData){
+          navigator.notification.alert("Error:" + JSON.stringify(errorData), null, "Camera Error", "OK");
+        }
+        </script>
+    </body>
+</html>

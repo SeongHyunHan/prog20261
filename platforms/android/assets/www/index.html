@@ -34,7 +34,7 @@
                 </div>
                   <label for="age">Age:</label>
                   <input type="range" id="age" name="age"
-                        value=20 min=0 max=100>
+                       min="0" max="100">
                 <div class="ui-field-contain">
                   <label for="photo">Photo:</label>
                   <img id="photo" class="img-responsive" alt=""
@@ -57,15 +57,68 @@
         <script>
     			var jqmReady=$.Deferred();
     			var pgReady=$.Deferred();
+          var db = null;
+          var $name = $('#name');
+          var $email = $('#email');
+          var $age = $('#age');
 
     			$(document).on("pagecreate",  jqmReady.resolve);
     			  document.addEventListener("deviceready",pgReady.resolve,false);
 
     			// We must wait until both objects are resolved!
     			$.when(jqmReady,pgReady).then (function(){
-            navigator.notification.alert("Device Ready", null, "Ready", "OK");
-    			    document.getElementById("btnPhoto").addEventListener("click", takePhoto);
+
+  			    document.getElementById("btnPhoto").addEventListener("click", takePhoto);
+            document.getElementById("btnSave").addEventListener("click", saveInfo);
+            document.getElementById("btnGet").addEventListener("click", getInfo);
+
+            //Create connection to SQLite database
+            db = window.sqlitePlugin.openDatabase({name: 'person.db', location: 'default'});
+
+            //Create table "Person" where keep all Person
+            db.transaction(function(tx){
+              tx.executeSql('CREATE TABLE IF NOT EXISTS Person (email TEXT PRIMARY KEY, name TEXT, age INT)');
+            },
+            function(error){
+              navigator.notification.alert("Error: " + error.message, null, "Database Error", "OK");
+            },
+            function(){
+              navigator.notification.alert("Database Opened", null, "Database Success", "OK");
+            });
     			});
+
+          function saveInfo(event){
+            event.preventDefault();
+
+            var email=$email.val();
+            var name=$name.val();
+            var age = $age.val();
+
+            alert(age + ", " + $age.val());
+
+            db.transaction(function(tx){
+              tx.executeSql('INSERT INTO Person VALUES (?,?,?)', [email, name, age]);
+              }, function(error){
+              navigator.notification.alert("Error" + error.message, null, "Database Error", "OK");
+              }, function(){
+              navigator.notification.alert("Populated Database", null, "Database Success", "OK");
+            });
+          }
+
+          function getInfo(event){
+            event.preventDefault();
+
+            var email=$email.val();
+
+            db.executeSql('SELECT name, age FROM Person WHERE email LIKE "' + email + '"', [], function(rs){
+              $name.val(rs.rows.item(0).name);
+              $age.val(rs.rows.item(0).age).slider("refresh");
+            }, function(error){
+              navigator.notification.alert("Select SQL statment Error: " + error.message, null, "Database Error", "OK");
+            });
+          }
+
+
 
         function takePhoto(){
           var options =  { quality:25,
@@ -75,7 +128,6 @@
                             correctOrientation: true,
                             allowEdit: true
                           };
-          navigator.notification.alert("Code Got Here", null, "Here", "OK");
           navigator.camera.getPicture(cameraSuccess, cameraError, options);
         }
 

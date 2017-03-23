@@ -34,7 +34,7 @@
                 </div>
                   <label for="age">Age:</label>
                   <input type="range" id="age" name="age"
-                        value="20" min="0" max="100">
+                       min="0" max="100">
                 <div class="ui-field-contain">
                   <label for="photo">Photo:</label>
                   <img id="photo" class="img-responsive" alt=""
@@ -61,7 +61,6 @@
           var $name = $('#name');
           var $email = $('#email');
           var $age = $('#age');
-          var age = $age.val();
 
     			$(document).on("pagecreate",  jqmReady.resolve);
     			  document.addEventListener("deviceready",pgReady.resolve,false);
@@ -73,10 +72,6 @@
             document.getElementById("btnSave").addEventListener("click", saveInfo);
             document.getElementById("btnGet").addEventListener("click", getInfo);
 
-            $age.on("slidestop", function(){
-              age = $age.val();
-              alert(age)
-            });
             //Create connection to SQLite database
             db = window.sqlitePlugin.openDatabase({name: 'person.db', location: 'default'});
 
@@ -99,6 +94,8 @@
             var name=$name.val();
             var age = $age.val();
 
+            alert(age + ", " + $age.val());
+
             db.transaction(function(tx){
               tx.executeSql('INSERT INTO Person VALUES (?,?,?)', [email, name, age]);
               }, function(error){
@@ -106,7 +103,7 @@
               }, function(){
               navigator.notification.alert("Populated Database", null, "Database Success", "OK");
             });
-          };
+          }
 
           function getInfo(event){
             event.preventDefault();
