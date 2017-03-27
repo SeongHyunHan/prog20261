@@ -33,7 +33,6 @@
                   <label for="age">Age:</label>
                   <input type="range" name="age" id="age" value="20" min="0" max="100">
                 </div>
-                <div data-role="popup" id="popup"></div>
                 <div class="ui-field-contain">
                   <label for="photo">Photo:</label>
                   <div class="ui-grid-a">
@@ -51,6 +50,7 @@
                         src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
                 </div>
 
+                <div data-role="popup" id="popup"></div>
                 <div class="ui-field-contain">
                   <button id="btnSave" class="ui-btn ui-icon-star ui-btn-icon-left">Save Info</button>
                   <button id="btnGet" class="ui-btn ui-icon-action ui-btn-icon-left">Get Info</button>
@@ -120,7 +120,6 @@
             var msg = '';
 
             if(name.trim().length == 0){
-              navigator.notification.alert("Populated Database2", null, "Database Success", "OK");
               msg += "Name can not be Empty!";
             }
             if(email.trim().length == 0){
@@ -140,10 +139,6 @@
             }
           };
 
-          function add(email, name, age, photo){
-
-          }
-
           function getInfo(event){
             event.preventDefault();
 
@@ -155,6 +150,7 @@
               navigator.notification.alert("Populated Database1", null, "Database Success", "OK");
               msg += "Email can not be Empty!";
             }
+
             if(msg !== ''){
               showPopup(msg);
             }else{
