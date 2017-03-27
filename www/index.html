@@ -120,6 +120,7 @@
             var msg = '';
 
             if(name.trim().length == 0){
+              navigator.notification.alert("Populated Database2", null, "Database Success", "OK");
               msg += "Name can not be Empty!";
             }
             if(email.trim().length == 0){
@@ -150,12 +151,11 @@
 
             var msg = '';
 
-            if(name.trim().length == 0){
-              msg += "Name can not be Empty!";
-            }
             if(email.trim().length == 0){
+              navigator.notification.alert("Populated Database1", null, "Database Success", "OK");
               msg += "Email can not be Empty!";
             }
+            
             if(msg !== ''){
               showPopup(msg);
             }else{
