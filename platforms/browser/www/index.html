@@ -8,7 +8,7 @@
 
         <!-- Note! Below we load jQuery and jQuery Mobile for Google CDN Library.
              In General (and for your Assignment N2!) you must use locad jQuery and jQuery Mobile libraries locally!!!. -->
-        <script src="libs/jquery/jquery-2.2.4.min.js" type="text/javascript"></script>
+        <script src="libs/jquery/jquery-1.12.4.min.js" type="text/javascript"></script>
         <link href="libs/jquery-mobile/jquery.mobile-1.4.5.min.css" rel="stylesheet" type="text/css"/>
         <script src="libs/jquery-mobile/jquery.mobile-1.4.5.min.js" type="text/javascript"></script>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
@@ -29,11 +29,10 @@
                   <input type="text" id="email" name="email"
                        placeholder="Enter your e-mail">
                 </div>
-                <div class="ui-field-contain">
+              <div class="ui-field-contain">
                   <label for="age">Age:</label>
                   <input type="range" name="age" id="age" value="20" min="0" max="100">
                 </div>
-                <div data-role="popup" id="popup"></div>
                 <div class="ui-field-contain">
                   <label for="photo">Photo:</label>
                   <div class="ui-grid-a">
@@ -41,7 +40,7 @@
                       <button id="btnPhoto" class="ui-btn ui-icon-camera ui-btn-icon-left">Click to Upload</button>
                     </div>
                     <div class="ui-block-b">
-                      <button id="btnDelPhoto" class="ui-btn ui-icon-camera ui-btn-icon-left">Delete</button>
+                      <button id="btnDelPhoto" class="ui-btn ui-icon-delete ui-btn-icon-left">Delete Photo</button>
                     </div>
                   </div>
                 </div>
@@ -51,6 +50,7 @@
                         src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
                 </div>
 
+                <div data-role="popup" id="popup" data-position-to="window" data-transition="true"></div>
                 <div class="ui-field-contain">
                   <button id="btnSave" class="ui-btn ui-icon-star ui-btn-icon-left">Save Info</button>
                   <button id="btnGet" class="ui-btn ui-icon-action ui-btn-icon-left">Get Info</button>
@@ -70,6 +70,7 @@
           var $age = null;
           var $photo = null;
           var $delPhoto = null;
+          var $popup = null;
 
     			$(document).on("pagecreate",  jqmReady.resolve);
     			  document.addEventListener("deviceready",pgReady.resolve,false);
@@ -81,6 +82,7 @@
             $age = $('#age');
             $photo = $('#photo');
             $delPhoto = $('#btnDelPhoto');
+            $popup = $('#popup');
             $delPhoto.hide();
 
   			    document.getElementById("btnPhoto").addEventListener("click", takePhoto);
@@ -102,15 +104,13 @@
             function(error){
               navigator.notification.alert("Error: " + error.message, null, "Database Error", "OK");
             },
-            function(){
-              navigator.notification.alert("Database Opened", null, "Database Success", "OK");
-            });
+            function(){});
     			});
 
 
 
           function saveInfo(event){
-
+            event.preventDefault();
 
             var email=$email.val();
             var name=$name.val();
@@ -120,13 +120,12 @@
             var msg = '';
 
             if(name.trim().length == 0){
-              msg += "Name can not be Empty!";
+              msg += "Name can not be Empty! <br />";
             }
             if(email.trim().length == 0){
               msg += "Email can not be Empty!";
             }
             if(msg !== ''){
-              event.preventDefault();
               showPopup(msg);
             }else{
               db.transaction(function(tx){
@@ -134,14 +133,11 @@
               }, function(error){
                 navigator.notification.alert("Error" + error.message, null, "Database Error", "OK");
               }, function(){
-                navigator.notification.alert("Populated Database", null, "Database Success", "OK");
+                navigator.notification.alert("Information Saved", null, "Save Info", "OK");
+                clearInfo();
               });
             }
           };
-
-          function add(email, name, age, photo){
-
-          }
 
           function getInfo(event){
             event.preventDefault();
@@ -150,12 +146,10 @@
 
             var msg = '';
 
-            if(name.trim().length == 0){
-              msg += "Name can not be Empty!";
-            }
             if(email.trim().length == 0){
               msg += "Email can not be Empty!";
             }
+
             if(msg !== ''){
               showPopup(msg);
             }else{
@@ -165,11 +159,14 @@
 
                 navigator.notification.alert(rs.rows.item(0).photo, null, "Database Error", "OK");
 
-                if(rs.rows.item(0).photo != "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
-                  $photo.attr("src", rs.rows.item(0).photo);
-                  $delPhoto.show();
-                }else{
-                  $delPhoto.hide();
+                //if photo scr is equal to empty gif then get src from photo column in sqlite
+                if($photo.attr("src") == "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
+                  if(rs.rows.item(0).photo != "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
+                    $photo.attr("src", rs.rows.item(0).photo);
+                    $delPhoto.show();
+                  }else{ //else hide the button
+                    $delPhoto.hide();
+                  }
                 }
               }, function(error){
                 navigator.notification.alert("Select SQL statment Error: " + error.message, null, "Database Error", "OK");
@@ -184,7 +181,6 @@
             $photo.attr("src", "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
             $delPhoto.hide();
           }
-
 
 
         function takePhoto(){
@@ -208,8 +204,8 @@
         }
 
         function showPopup(msg){
-          $("#popup").html("<p>"+msg+"</p>").popup("open");
-          setTimeout(function() {$("#popu").popup("close"), 10000});
+          $popup.html("<p>"+msg+"</p>").popup("open");
+          setTimeout(function() {$popup.popup("close"), 10000});
         }
         </script>
     </body>

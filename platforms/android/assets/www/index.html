@@ -26,10 +26,10 @@
 
                 <div class="ui-field-contain">
                   <label for="email">Email:</label>
-                  <input type="text" id="email" name="email"
+                  <input type="email" id="email" name="email"
                        placeholder="Enter your e-mail">
                 </div>
-                <div class="ui-field-contain">
+              <div class="ui-field-contain">
                   <label for="age">Age:</label>
                   <input type="range" name="age" id="age" value="20" min="0" max="100">
                 </div>
@@ -40,7 +40,7 @@
                       <button id="btnPhoto" class="ui-btn ui-icon-camera ui-btn-icon-left">Click to Upload</button>
                     </div>
                     <div class="ui-block-b">
-                      <button id="btnDelPhoto" class="ui-btn ui-icon-camera ui-btn-icon-left">Delete</button>
+                      <button id="btnDelPhoto" class="ui-btn ui-icon-delete ui-btn-icon-left">Delete Photo</button>
                     </div>
                   </div>
                 </div>
@@ -104,9 +104,7 @@
             function(error){
               navigator.notification.alert("Error: " + error.message, null, "Database Error", "OK");
             },
-            function(){
-              navigator.notification.alert("Database Opened", null, "Database Success", "OK");
-            });
+            function(){});
     			});
 
 
@@ -114,7 +112,7 @@
           function saveInfo(event){
             event.preventDefault();
 
-            var email=$email.val();
+            var email=$email.val().toUpperCase();
             var name=$name.val();
             var age = $age.val();
             var photo = $photo.attr("src");
@@ -131,11 +129,12 @@
               showPopup(msg);
             }else{
               db.transaction(function(tx){
-                tx.executeSql('INSERT INTO PERSON VALUES (?,?,?,?)', [email, name, age, photo]);
+                tx.executeSql('INSERT INTO Person VALUES (?,?,?,?)', [email, name, age, photo]);
               }, function(error){
                 navigator.notification.alert("Error" + error.message, null, "Database Error", "OK");
               }, function(){
-                navigator.notification.alert("Populated Database", null, "Database Success", "OK");
+                navigator.notification.alert("Information Saved", null, "Save Info", "OK");
+                clearInfo();
               });
             }
           };
@@ -154,17 +153,20 @@
             if(msg !== ''){
               showPopup(msg);
             }else{
-              db.executeSql('SELECT name, age FROM Person WHERE email LIKE "' + email + '"', [], function(rs){
+              db.executeSql('SELECT name, age FROM Person WHERE email LIKE UPPER("' + email + '")', [], function(rs){
                 $name.val(rs.rows.item(0).name);
                 $age.val(rs.rows.item(0).age).slider("refresh");
 
                 navigator.notification.alert(rs.rows.item(0).photo, null, "Database Error", "OK");
 
-                if(rs.rows.item(0).photo != "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
-                  $photo.attr("src", rs.rows.item(0).photo);
-                  $delPhoto.show();
-                }else{
-                  $delPhoto.hide();
+                //if photo scr is equal to empty gif then get src from photo column in sqlite
+                if($photo.attr("src") == "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
+                  if(rs.rows.item(0).photo != "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
+                    $photo.attr("src", rs.rows.item(0).photo);
+                    $delPhoto.show();
+                  }else{ //else hide the button
+                    $delPhoto.hide();
+                  }
                 }
               }, function(error){
                 navigator.notification.alert("Select SQL statment Error: " + error.message, null, "Database Error", "OK");
@@ -179,7 +181,6 @@
             $photo.attr("src", "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
             $delPhoto.hide();
           }
-
 
 
         function takePhoto(){
