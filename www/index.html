@@ -69,8 +69,9 @@
           var $email = null;
           var $age = null;
           var $photo = null;
-          var $delPhoto = null;
           var $popup = null;
+          var emptyPhoto =null;
+          var $delPhoto = null;
 
     			$(document).on("pagecreate",  jqmReady.resolve);
     			  document.addEventListener("deviceready",pgReady.resolve,false);
@@ -83,22 +84,30 @@
             $photo = $('#photo');
             $delPhoto = $('#btnDelPhoto');
             $popup = $('#popup');
+            var $btnPhoto = $('#btnPhoto');
+            var $btnSave = $('#btnSave');
+            var $btnGet = $('#btnGet');
+            var $btnClear = $('#btnClear');
+
+            emptyPhoto=$photo.attr('src');
             $delPhoto.hide();
 
-  			    document.getElementById("btnPhoto").addEventListener("click", takePhoto);
-            document.getElementById("btnSave").addEventListener("click", saveInfo);
-            document.getElementById("btnGet").addEventListener("click", getInfo);
-            document.getElementById("btnClear").addEventListener("click", clearInfo);
-
             $delPhoto.on("click", function(){
-              $photo.attr("src" ,"data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
+              $photo.prop("src" ,emptyPhoto);
+              $delPhoto.hide();
             });
+
+            $btnPhoto.on("click", takePhoto);
+            $btnSave.on("click", saveInfo);
+            $btnGet.on("click", getInfo);
+            $btnClear.on("click", clearInfo);
 
             //Create connection to SQLite database
             db = window.sqlitePlugin.openDatabase({name: 'person.db', location: 'default'});
 
             //Create table "Person" where keep all Person
             db.transaction(function(tx){
+              tx.executeSql('DROP TABLE IF EXISTS Person');
               tx.executeSql('CREATE TABLE IF NOT EXISTS Person (email TEXT PRIMARY KEY, name TEXT, age INT, photo TEXT)');
             },
             function(error){
@@ -112,24 +121,25 @@
           function saveInfo(event){
             event.preventDefault();
 
-            var email=$email.val().toUpperCase();
-            var name=$name.val();
-            var age = $age.val();
-            var photo = $photo.attr("src");
+            var email=$email.val().trim().toUpperCase();
+            var name=$name.val().trim();
+            var age = $age.val().trim();
+            var photo = $photo.prop("src");
+            if (photo == emptyPhoto) {photo="";}
 
             var msg = '';
 
-            if(name.trim().length == 0){
+            if(name.length == 0){
               msg += "Name can not be Empty! <br />";
             }
-            if(email.trim().length == 0){
+            if(email.length == 0){
               msg += "Email can not be Empty!";
             }
             if(msg !== ''){
-              showPopup(msg);
+              showPopup(msg); return;
             }else{
               db.transaction(function(tx){
-                tx.executeSql('INSERT INTO Person VALUES (?,?,?,?)', [email, name, age, photo]);
+                tx.executeSql('INSERT OR REPLACE INTO Person VALUES (?,?,?,?)', [email, name, age, photo]);
               }, function(error){
                 navigator.notification.alert("Error" + error.message, null, "Database Error", "OK");
               }, function(){
@@ -142,30 +152,34 @@
           function getInfo(event){
             event.preventDefault();
 
-            var email=$email.val();
+            var email=$email.val().trim();
 
             var msg = '';
 
-            if(email.trim().length == 0){
+            if(email.length == 0){
               msg += "Email can not be Empty!";
             }
 
             if(msg !== ''){
               showPopup(msg);
             }else{
-              db.executeSql('SELECT name, age FROM Person WHERE email LIKE UPPER("' + email + '")', [], function(rs){
-                $name.val(rs.rows.item(0).name);
-                $age.val(rs.rows.item(0).age).slider("refresh");
+              db.executeSql('SELECT name, age, photo FROM Person WHERE email LIKE LOWER("' + email + '")', [], function(rs){
+                if(rs.rows.length  < 1) {
+                  showPopup("Email do not exist in data");
+                  return;
+                }
+                else{
+                  $name.val(rs.rows.item(0).name);
+                  $age.val(rs.rows.item(0).age).slider("refresh");
 
-                navigator.notification.alert(rs.rows.item(0).photo, null, "Database Error", "OK");
-
-                //if photo scr is equal to empty gif then get src from photo column in sqlite
-                if($photo.attr("src") == "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
-                  if(rs.rows.item(0).photo != "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="){
-                    $photo.attr("src", rs.rows.item(0).photo);
-                    $delPhoto.show();
-                  }else{ //else hide the button
+                  var photo=rs.rows.item(0).photo;
+                  if (photo.length < 1) {
+                    photo=emptyPhoto;
+                    $photo.prop("src", photo);
                     $delPhoto.hide();
+                  }else{
+                    $photo.prop("src", photo);
+                    $delPhoto.show();
                   }
                 }
               }, function(error){
@@ -178,7 +192,7 @@
             $name.val("");
             $email.val("");
             $age.val(20).slider("refresh");
-            $photo.attr("src", "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
+            $photo.prop("src", emptyPhoto);
             $delPhoto.hide();
           }
 
@@ -195,7 +209,7 @@
         }
 
         function cameraSuccess(imageData){
-          $photo.attr("src", imageData);
+          $photo.prop("src", imageData);
           $delPhoto.show();
         }
 
