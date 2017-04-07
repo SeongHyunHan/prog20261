@@ -2,4 +2,4 @@
 
 <a href="https://github.com/SeongHyunHan/prog20261/tree/assignment2">Assignment 2</a>
 
-<a href="https://github.com/SeongHyunHan/prog20261/tree/finalProject">Final Project</a>
+<a href="https://github.com/SeongHyunHan/prog20261/tree/finalproject">Final Project</a>
